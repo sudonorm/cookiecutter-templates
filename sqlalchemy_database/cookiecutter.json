@@ -1,0 +1,13 @@
+{
+    "project_name": "SQLAlchemy database",
+    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_') }}",
+    "repo_name": "cookiecutter-templates",
+    "env_file_name": ".env",
+    "sqlalchemy_url": "x",
+    "is_sqlite": true,
+    "sqlite_database_name": "test",
+    "project_short_description": "Cookiecutter template for creating the structure needed for running and maintaining a SQLAlchemy database.",
+    "release_date": "2023-04-10",
+    "year": "2023",
+    "version": "0.9.9"
+  }

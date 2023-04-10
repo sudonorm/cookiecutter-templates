@@ -1,0 +1,8 @@
+Generic single-database configuration.
+
+To generate revisions py files after changes to data model use: 
+- Either run or import the `db/dataModel.py` file
+- Or we can use the `db/init_or_update_db.py` file in the `db` module
+    - In both cases, we need to change the `RUN_ONLY_MIGRATION` and `IS_SQLITE` arguments in the `resources/folderPaths.py` file appropriately
+    - For non SQLite databases, `IS_SQLITE` should be `False` and the `DB_URI` environment variable should be set
+- To create only a revision file we can do this from the root folder and with the CLI `alembic revision  --autogenerate -m "some migration message"`

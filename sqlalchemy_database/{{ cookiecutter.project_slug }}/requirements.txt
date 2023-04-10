@@ -1,0 +1,14 @@
+packaging
+requests
+PyMySQL
+pandas
+numpy
+xlrd
+openpyxl
+ipykernel
+notebook
+SQLAlchemy
+python-dotenv
+setuptools
+alembic
+cookiecutter
