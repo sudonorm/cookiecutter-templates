@@ -16,7 +16,7 @@ import sys
 
 class Connection:
 
-    def create_connection(self, db_file):
+    def create_connection(self, db_file) -> None:
             """ create a database connection to a SQLite database """
             conn = None
             try:
@@ -36,6 +36,45 @@ class Migrate(Connection):
         self.db_file_path = db_file_path
         self.run_only_migration = run_only_migration
 
+    def to_archive(self, path_data=r"", existingFile=r""):
+
+        """
+            Move old files to the archive
+    
+            Parameters
+            ----------
+                fileType (str): this should be the name of the file that is to be moved to the archive
+    
+            Notes
+            -----
+            .. Special attention should be payed to how the "archive" is named.
+                Changes might be necessary depending on how this is named or renamed
+    
+            Potential improvement
+            -----
+            ..
+    
+            Returns
+            -------
+            Nothing.
+        """
+        
+        for f in existingFile:
+            if "$" not in f:
+                if not os.path.exists(path_data + SLSH + "_archive" + SLSH + f.split(SLSH)[-1]):
+                    try:
+                        shutil.copy(f, path_data + SLSH + "_archive" + SLSH + f.split(SLSH)[-1])
+                        print("file copied")
+                        os.remove(f)
+                        print("file removed")
+                    except:
+                        pass
+                else:
+                    try:
+                        os.remove(f)
+                    except:
+                        pass
+
     def init_db(self) -> None:
 
         if self.is_sqlite:
@@ -44,11 +83,22 @@ class Migrate(Connection):
 
         has_changes = self.check_for_migrations()
 
-        if not 'alembic' in sys.modules['__main__'].__file__:
-            if has_changes:
-                if not self.run_only_migration:
-                    self.create_migrations(f'{time.strftime("%Y%m%d", time.gmtime())}{" migration"}')
-                self.run_migrations()
+        try:
+            if not 'alembic' in sys.modules['__main__'].__file__:
+                if has_changes:
+                    if not self.run_only_migration:
+                        self.create_migrations(f'{time.strftime("%Y%m%d", time.gmtime())}{" migration"}')
+                    self.run_migrations()
+        except Exception as e:
+            print(e)
+            if e == 'Target database is not up to date.':
+                vrsns_path = self.script_location+"/versions"
+                self.to_archive(path_data=vrsns_path, existingFile=glob(vrsns_path+'/*.py'))
+                if not 'alembic' in sys.modules['__main__'].__file__:
+                    if has_changes:
+                        if not self.run_only_migration:
+                            self.create_migrations(f'{time.strftime("%Y%m%d", time.gmtime())}{" migration"}')
+                        self.run_migrations()
 
     def check_for_migrations(self) -> bool:
         config = Config()

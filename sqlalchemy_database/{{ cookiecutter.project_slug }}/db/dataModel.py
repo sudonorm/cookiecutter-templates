@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect as sys_inspect
-from sqlalchemy import create_engine, event, inspect, Index
+from sqlalchemy import create_engine, event, inspect, Index, UniqueConstraint
 from sqlalchemy.orm import declarative_base, registry, relationship, sessionmaker
 from sqlalchemy import Column, Integer, String, ForeignKey, Table, MetaData, Boolean, BigInteger, DateTime, Date, Numeric, Text, Float
 
@@ -79,11 +79,24 @@ engine = create_engine(db_uri, echo=False) # if you want to see the queries bein
 SessionLocal = sessionmaker(bind=engine)
 
 ## replace Tables here
-class TeatTable(Base):
+
+class Geos(Base):
+    __tablename__ = "geos"
+
+    id = Column(Integer, primary_key=True)
+    geo = Column(String(200), nullable=False)
+    geo_url = Column(Text, nullable=False)
+
+class TestTable(Base):
     __tablename__ = "testTable"
 
     id = Column(Integer, primary_key=True)
     test_col = Column(String(200), nullable=False)
+    test_col_two = Column(String(200), nullable=False)
+    geo_id = Column(Integer, ForeignKey('geos.id', name='fk_tt_geos_id'), nullable=False)
+
+    __table_args__ = (UniqueConstraint(test_col, name='u_test_col'), Index('idx_test_cols', 'test_col', 'test_col_two', unique=True),)
+
 
 ####### Do not delete ######
 migrate = Migrate(script_location=script_location, uri=db_uri, is_sqlite=IS_SQLITE, db_file_path=sqlite_file_path, run_only_migration=RUN_ONLY_MIGRATION)
