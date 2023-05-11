@@ -29,6 +29,7 @@ class UploadData(HelperFunctions):
     def upload_info(self, df:pd.DataFrame = pd.DataFrame(), dbTable:str ='', cols_dict = {"base_url":"base_url"}):
         '''
         General upload function which should be able to upload anything thrown at it
+        usage: upload_info(df=geos_df, dbTable = "dataModel.Geos", cols_dict = {"geo":"geo"})
         '''
 
         dbTable_evl = eval(dbTable)
@@ -44,6 +45,8 @@ class UploadData(HelperFunctions):
     def upload_info_atomic(self, dbTable:str ='', df:pd.DataFrame = pd.DataFrame(), unique_idx_elements:list = [], column_update_fields:list = []):
         '''
         General upload function which should be able to upload anything thrown at it
+        Usage: upload_info_atomic(dbTable="dataModel.Geos", df=geos_df, unique_idx_elements=['geo'], column_update_fields=['geo_url'],)
+
         '''
 
         for col in unique_idx_elements:
@@ -68,6 +71,7 @@ class DownloadData(HelperFunctions):
     def download_info(self, dbTable:str ='', fltr_output = True, fltr = ["_sa_instance_state", "id"], exclude_filter:bool = True):
         '''
         General upload function which should be able to download from the database
+        Usage: download_info(dbTable = "dataModel.Geos", fltr_output = True, fltr = ["_sa_instance_state"], exclude_filter = True)
         '''
 
         bulk = BulkUpload(dbTable, self.engine)
