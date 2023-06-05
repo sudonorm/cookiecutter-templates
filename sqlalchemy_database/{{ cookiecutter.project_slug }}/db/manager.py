@@ -10,9 +10,11 @@ from typing import Any
 home_dir = (os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(home_dir)
 from resources import folderPaths
-import os
 import time
-import sys
+import shutil
+from glob import glob
+
+SLSH = os.sep
 
 class Connection:
 
