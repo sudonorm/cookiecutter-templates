@@ -78,21 +78,6 @@ class HelperFunctions:
         
         else:
             return dict(list(input_dict.items())[:])
-    
-    def get_or_read_crawl_log(self, tmstp:str, func_no:int) -> pd.DataFrame:
-        crawlfile = 'crawl_log'
-        full_crawl_file = f'{tmstp}{crawlfile}{func_no}{".csv"}'
-        crawl_log = pd.DataFrame(columns=['asin'])
-
-        data_path = os.getcwd()
-        path_to_file = f'{data_path}{os.sep}{"crawl_status"}{os.sep}{full_crawl_file}'
-
-        if not os.path.exists(path_to_file):
-            crawl_log.to_csv(path_to_file, index=False, sep=";")
-        else:
-            crawl_log = pd.read_csv(path_to_file, sep=";")
-
-        return crawl_log, path_to_file
 
     def split_to_list_or_return(self, text:str, sep:str) -> List:
         """
