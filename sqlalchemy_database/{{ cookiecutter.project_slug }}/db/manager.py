@@ -90,8 +90,8 @@ class Migrate(Connection):
                         self.create_migrations(f'{time.strftime("%Y%m%d", time.gmtime())}{" migration"}')
                     self.run_migrations()
         except Exception as e:
-            print(e)
-            if e == 'Target database is not up to date.':
+            print(str(e))
+            if 'Target database is not' in str(e):
                 vrsns_path = self.script_location+"/versions"
                 self.to_archive(path_data=vrsns_path, existingFile=glob(vrsns_path+'/*.py'))
                 if not 'alembic' in sys.modules['__main__'].__file__:

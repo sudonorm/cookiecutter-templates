@@ -26,9 +26,9 @@ sys.path.append(home_dir)
 try:
     from .manager import Migrate, Connection
 except:
-    from manager import Migrate, Connection
+    from db.manager import Migrate, Connection
 
-from helper_functions import HelperFunctions
+from db.helper_functions import HelperFunctions
 
 from resources import folderPaths
 from sys import platform as pltfrm_type

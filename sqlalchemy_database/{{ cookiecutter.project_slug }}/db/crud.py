@@ -5,6 +5,9 @@ from sqlalchemy import MetaData
 from sqlalchemy import func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_upsert
 import sys
+import os
+home_dir = (os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(home_dir)
 
 from glob import glob
 from typing import List, Dict, Union, Tuple, Any
@@ -13,7 +16,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 ### helper funcs
-from .helper_functions import HelperFunctions
+from db.helper_functions import HelperFunctions
 from . import dataModel
 
 meta = MetaData()
@@ -233,18 +236,21 @@ class BulkUpload:
         df = self.get_or_none(df = df.copy(), cols_dict=cols_dict, create_pk = create_pk)
         self.upsert(df, create_pk=create_pk)
 
-    def atomic_bulk_upsert(self, data:pd.DataFrame, unique_idx_elements:list, column_update_fields:list):
+    def atomic_bulk_upsert(self, data:pd.DataFrame, unique_idx_elements:list, column_update_fields:list) -> List[int]:
         """Bulk upsert records using the sqlite_upsert method. This method has also been tested to work with not just SQLite but also postgresSQL
 
         Args:
             dbTable (str): a string representation of the Table to be worked on in the form dataModel.testTable
             data (pd.DataFrame): dataframe containing the data to be uploaded. Column names must match column names in the DB
-            unique_idx_elements (list): a list of columns which should be searched for, which when considered together are unique. Can also be one unique field
+            unique_idx_elements (list): a list of columns which should be searched for, which when considered together are unique. Can also be one unique field. 
+            A sequence consisting of string column names, _schema.Column objects, or other column expression objects that will be used to infer a target index or unique constraint.
             column_update_fields (list): a list of the columns to be updated. 
         """
         dbTable = self.dbTableStr
         records = [u for u in data.to_dict("records")]
         dbTable_eval = eval(dbTable)
+        dbTable_eval_id = eval(f'{self.dbTableStr}{".id"}')
+
         # column_update_fields = list(set(column_update_fields).difference(unique_idx_elements))
 
         with Session(dataModel.engine) as session, session.begin():
@@ -256,7 +262,12 @@ class BulkUpload:
                 # stmt = stmt.on_conflict_do_update(index_elements=[x.name for x in eval(f'{dbTable}{".__table_args__"}') if x.__visit_name__ in ['unique_constraint']], set_=column_dict_fields)
                 stmt = stmt.on_conflict_do_update(index_elements=unique_idx_elements, set_=column_dict_fields)
 
+                result = session.scalars(stmt.returning(dbTable_eval_id))
+                row_ids = result.all()
+
                 session.execute(stmt)
+
+                return row_ids
 
     def select_table(self, dbTable:object, fltr_output:bool = False, fltr:List = ["_sa_instance_state"], useSubset:bool = False, subset_col:str="", subset:list=[]) -> List:
         """
@@ -273,6 +284,8 @@ class BulkUpload:
             List: a list of records from a Table in the database
         """
 
+        subset = subset + [str(x) for x in subset]
+        
         with Session(self.engine) as session:
 
             # elements = [object_as_dict(u) for u in session.query(self.dbTable).all()] # another method that can be used to return a dictionary

@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
+import os
 import sys
 sys.path.append("..")
+home_dir = (os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(home_dir)
 from . import dataModel
 
 from glob import glob
@@ -12,10 +15,10 @@ import warnings
 warnings.filterwarnings("ignore")
 
 ### helper funcs
-from .helper_functions import HelperFunctions
+from db.helper_functions import HelperFunctions
 
 ## crud
-from .crud import BulkUpload
+from db.crud import BulkUpload
 
 class UploadData(HelperFunctions):
 
@@ -42,7 +45,7 @@ class UploadData(HelperFunctions):
         bulk = BulkUpload(dbTable, self.engine)
         bulk.upsert_table(dbTable_evl, df, cols_dict, True)
 
-    def upload_info_atomic(self, dbTable:str ='', df:pd.DataFrame = pd.DataFrame(), unique_idx_elements:list = [], column_update_fields:list = []):
+    def upload_info_atomic(self, dbTable:str ='', df:pd.DataFrame = pd.DataFrame(), unique_idx_elements:list = [], column_update_fields:list = []) -> List[int]:
         '''
         General upload function which should be able to upload anything thrown at it
         Usage: upload_info_atomic(dbTable="dataModel.Geos", df=geos_df, unique_idx_elements=['geo'], column_update_fields=['geo_url'],)
@@ -57,7 +60,9 @@ class UploadData(HelperFunctions):
         df = self.replace_nan_with_none(df)
         bulk = BulkUpload(dbTable, self.engine)
 
-        bulk.atomic_bulk_upsert(df, unique_idx_elements, column_update_fields )
+        row_ids = bulk.atomic_bulk_upsert(df, unique_idx_elements, column_update_fields)
+
+        return row_ids
 
 class DownloadData(HelperFunctions):
 
@@ -68,7 +73,7 @@ class DownloadData(HelperFunctions):
     def __init__(self):
         self.engine = dataModel.engine
 
-    def download_info(self, dbTable:str ='', fltr_output = True, fltr = ["_sa_instance_state", "id"], exclude_filter:bool = True):
+    def download_info(self, dbTable:str ='', fltr_output = True, fltr = ["_sa_instance_state", "id"], exclude_filter:bool = True, useSubset:bool = False, subset_col:str="", subset:list=[]):
         '''
         General upload function which should be able to download from the database
         Usage: download_info(dbTable = "dataModel.Geos", fltr_output = True, fltr = ["_sa_instance_state"], exclude_filter = True)
@@ -76,7 +81,7 @@ class DownloadData(HelperFunctions):
 
         bulk = BulkUpload(dbTable, self.engine)
         dbTable_evl = eval(dbTable)
-        data = pd.DataFrame(bulk.select_table(dbTable_evl, fltr_output = False))
+        data = pd.DataFrame(bulk.select_table(dbTable_evl, fltr_output = False, useSubset = useSubset, subset_col=subset_col, subset=subset))
 
         if len(data.columns) > 0 and len(data) > 0:
             if exclude_filter:
@@ -87,3 +92,22 @@ class DownloadData(HelperFunctions):
             data = pd.DataFrame()
 
         return data
+
+class DeleteData(HelperFunctions):
+
+    """The UploadData class is the core of the upload process. In this class, there are functions which are used to upload data
+        to different tables in the database
+
+    """
+
+    def __init__(self):
+        self.engine = dataModel.engine
+
+    def delete_data_from_table_using_ids(self, dbTable:str, pk_col_of_table:str, lst_of_ids:List):
+
+        """Usage: delete_data_from_table_using_ids(dbTable='dataModel.User', pk_col_of_table = 'dataModel.User.id', lst_of_ids = list(user_ids['id']))
+            where user_ids is a dataframe in this instance
+        """
+
+        bulk = BulkUpload(dbTable, self.engine)
+        bulk.delete_from_table(table = dbTable, pk_col_of_table = pk_col_of_table, lst_of_ids = lst_of_ids)

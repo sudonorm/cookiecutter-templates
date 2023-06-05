@@ -65,6 +65,35 @@ class HelperFunctions:
         except:
             return np.nan
 
+    def slice_dictionary(self, input_dict:dict, start:int = '', stop:int = '') -> dict:
+
+        if start and stop:
+            return dict(list(input_dict.items())[start:stop])
+        
+        elif start and not stop:
+            return dict(list(input_dict.items())[start:])
+        
+        elif not start and stop:
+            return dict(list(input_dict.items())[:stop])
+        
+        else:
+            return dict(list(input_dict.items())[:])
+    
+    def get_or_read_crawl_log(self, tmstp:str, func_no:int) -> pd.DataFrame:
+        crawlfile = 'crawl_log'
+        full_crawl_file = f'{tmstp}{crawlfile}{func_no}{".csv"}'
+        crawl_log = pd.DataFrame(columns=['asin'])
+
+        data_path = os.getcwd()
+        path_to_file = f'{data_path}{os.sep}{"crawl_status"}{os.sep}{full_crawl_file}'
+
+        if not os.path.exists(path_to_file):
+            crawl_log.to_csv(path_to_file, index=False, sep=";")
+        else:
+            crawl_log = pd.read_csv(path_to_file, sep=";")
+
+        return crawl_log, path_to_file
+
     def split_to_list_or_return(self, text:str, sep:str) -> List:
         """
         This function is used to split a text on some separator and return the split text as a list
@@ -101,6 +130,23 @@ class HelperFunctions:
             return None
     
     def replace_nan_with_none(self, df:pd.DataFrame) -> pd.DataFrame:
+        """
+        Replace NaN values with None in the given pandas DataFrame.
+
+        Args:
+            df (pd.DataFrame): Input DataFrame containing NaN values.
+
+        Returns:
+            pd.DataFrame: DataFrame with NaN values replaced by None.
+
+        Raises:
+            None
+
+        Notes:
+            - If the version of pandas is 1.3.0 or higher, the function uses the `replace` method to replace NaN values with None.
+            - For older versions of pandas, the function uses the `where` method in combination with `pd.notnull` to replace NaN values with None.
+
+        """
         from packaging import version
         import numpy as np
         

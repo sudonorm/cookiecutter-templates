@@ -1,5 +1,8 @@
 import sys
-sys.path.append(".")
+# sys.path.append(".")
+home_dir = (os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(home_dir)
+
 try:
     from manager import Migrate, Connection
 except:
