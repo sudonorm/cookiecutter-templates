@@ -246,8 +246,6 @@ class BulkUpload:
             A sequence consisting of string column names, _schema.Column objects, or other column expression objects that will be used to infer a target index or unique constraint.
             column_update_fields (list): a list of the columns to be updated. 
         """
-        all_row_ids = []
-        data = data.drop_duplicates(subset=unique_idx_elements).reset_index(drop=True)
         dbTable = self.dbTableStr
         records = [u for u in data.to_dict("records")]
         dbTable_eval = eval(dbTable)
@@ -266,11 +264,10 @@ class BulkUpload:
 
                 result = session.scalars(stmt.returning(dbTable_eval_id))
                 row_ids = result.all()
-                all_row_ids.extend(row_ids)
 
                 session.execute(stmt)
 
-        return all_row_ids
+                return row_ids
 
     def select_table(self, dbTable:object, fltr_output:bool = False, fltr:List = ["_sa_instance_state"], useSubset:bool = False, subset_col:str="", subset:list=[]) -> List:
         """

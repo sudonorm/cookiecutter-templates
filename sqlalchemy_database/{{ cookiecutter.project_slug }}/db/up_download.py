@@ -48,7 +48,18 @@ class UploadData(HelperFunctions):
     def upload_info_atomic(self, dbTable:str ='', df:pd.DataFrame = pd.DataFrame(), unique_idx_elements:list = [], column_update_fields:list = []) -> List[int]:
         '''
         General upload function which should be able to upload anything thrown at it
-        Usage: upload_info_atomic(dbTable="dataModel.Geos", df=geos_df, unique_idx_elements=['geo'], column_update_fields=['geo_url'],)
+        Usage:
+        idx_cols = ["somecolone", "somecoltwo"] -> a list of columns which have a UniqueConstraint and which when taken together give us a unique row in the table
+        update_cols = ["someupdatecolone", "someupdatecoltwo"] -> a lost of columns we want to update
+
+        row_id_x = upload.upload_info_atomic(
+                                dbTable="dataModel.User",
+                                df=import_df_unformatted[update_cols + idx_cols],
+                                unique_idx_elements=idx_cols,
+                                column_update_fields=update_cols,
+                            )
+
+        where row_id_x is a list of id of inserted or updated records
 
         '''
 

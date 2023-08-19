@@ -5,6 +5,7 @@ pandas
 numpy
 xlrd
 openpyxl
+XlsxWriter
 ipykernel
 notebook
 SQLAlchemy
@@ -12,3 +13,14 @@ python-dotenv
 setuptools
 alembic
 cookiecutter
+dash
+dash-bootstrap-components
+dash-labs
+glob2==0.7
+cx_Freeze
+waitress
+idna
+cx_Logging
+uvicorn
+gunicorn
+urllib3

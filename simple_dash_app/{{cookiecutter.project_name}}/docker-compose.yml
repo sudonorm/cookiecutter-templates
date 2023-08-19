@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  {{ cookiecutter.docker_compose_service_name }}:
+    environment:
+      - PYTHONUNBUFFERED=1
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: {{ cookiecutter.docker_compose_service_name }}_img
+    container_name: {{ cookiecutter.docker_compose_service_name }}_cont
+    restart: unless-stopped
+    volumes:
+      - /home/worker/containers/flask/MMT-Python:/app ## here you should bind the local folder: /home/worker/containers/flask/MMT-Python
+      - /projects/nas/XMO:/projects/nas/XMO
+      - /projects/nas/_General:/projects/nas/_General
+    ports:
+      - "{{ cookiecutter.app_port }}:{{ cookiecutter.app_port }}"
+    command: python3 -u /app/server.py
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.{{ cookiecutter.traefik_router_name }}.entrypoints=websecure"
+      - "traefik.http.routers.{{ cookiecutter.traefik_router_name }}.rule=Host(`stat-hh-smiworker.corp.statista.com`) && PathPrefix(`/{{ cookiecutter.url_endpoint_of_app }}{regex:$$|/.*}`)"
+      - "traefik.http.services.{{ cookiecutter.traefik_router_name }}.loadbalancer.server.port={{ cookiecutter.app_port }}"
+      - "traefik.http.routers.{{ cookiecutter.traefik_router_name }}.tls=true"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external:
+      true

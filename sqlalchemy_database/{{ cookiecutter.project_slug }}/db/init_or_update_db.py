@@ -12,7 +12,10 @@ import os
 from sqlalchemy import create_engine
 import time
 
-RUN_ONLY_MIGRATION = folderPaths.RUN_ONLY_MIGRATION
+RUN_MIGRATION = folderPaths.RUN_MIGRATION
+CREATE_ONLY_MIGRATION_FILE = folderPaths.CREATE_ONLY_MIGRATION_FILE
+DROP_ALEMBIC_TABLE_AND_STAMP_HEAD = folderPaths.DROP_ALEMBIC_TABLE_AND_STAMP_HEAD
+
 IS_SQLITE = folderPaths.IS_SQLITE
 
 if __name__ == '__main__':
@@ -33,7 +36,7 @@ if __name__ == '__main__':
 
     script_location = f'{folderPaths.BASEPATH_NETWORK}{folderPaths.SLSH}{"alembic"}'
     
-    migrate = Migrate(script_location=script_location, uri=db_uri, is_sqlite=IS_SQLITE, db_file_path=sqlite_file_path, run_only_migration=RUN_ONLY_MIGRATION)
+    migrate = Migrate(script_location=script_location, uri=db_uri, is_sqlite=IS_SQLITE, db_file_path=sqlite_file_path, create_only_migration_file=CREATE_ONLY_MIGRATION_FILE, run_migration=RUN_MIGRATION, drop_alembic_stamp_head=DROP_ALEMBIC_TABLE_AND_STAMP_HEAD)
     if migrate.check_for_migrations():
         migrate.init_db()
     

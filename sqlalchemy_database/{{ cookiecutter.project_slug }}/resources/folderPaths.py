@@ -36,5 +36,7 @@ BASEPATH = BASEPATH_NETWORK
 
 DB_NAME = "{{ cookiecutter.sqlite_database_name }}"
 DB_NAME = f'{DB_NAME}{".db"}'
-RUN_ONLY_MIGRATION = False
+DROP_ALEMBIC_TABLE_AND_STAMP_HEAD = False
+CREATE_ONLY_MIGRATION_FILE = False
+RUN_MIGRATION = True
 IS_SQLITE = {{ cookiecutter.is_sqlite }}

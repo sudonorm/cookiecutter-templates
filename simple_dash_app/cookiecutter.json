@@ -1,0 +1,14 @@
+{
+    "project_name": "Dash App",
+    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_') }}",
+    "repo_name": "cookiecutter_simple_dash_app",
+    "env_file_name": ".env",
+    "url_endpoint_of_app": "someapp",
+    "app_port": 8999,
+    "docker_compose_service_name": "{{ cookiecutter.url_endpoint_of_app.lower().replace(' ', '_') }}",
+    "traefik_router_name": "{{ cookiecutter.url_endpoint_of_app.lower().replace(' ', '_') }}",
+    "project_short_description": "Cookiecutter template for creating a simple dash application.",
+    "release_date": "2023-04-17",
+    "year": "2023",
+    "version": "1.0.0"
+  }

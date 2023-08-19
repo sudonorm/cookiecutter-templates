@@ -1,0 +1,64 @@
+version: "3.3"
+
+services:
+
+    traefik:
+        image: "traefik:v2.9"
+        container_name: "traefik"
+        command:
+        #- "--log.level=DEBUG"
+        - "--api.insecure=true"
+        - "--providers.docker=true"
+        - "--providers.docker.exposedbydefault=false"
+        - "--entrypoints.web.address=:80"
+        ports:
+        - "80:80"
+        - "8080:8080"
+        volumes:
+        - "/var/run/docker.sock:/var/run/docker.sock:ro"
+        networks:
+            - proxy
+
+    whoami:
+        image: "traefik/whoami"
+        container_name: "whoami"
+        labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+        - "traefik.http.routers.whoami.entrypoints=web"
+        networks:
+            - proxy
+
+    {{ cookiecutter.docker_compose_service_name }}_redis:
+        image: redis
+        container_name: "{{ cookiecutter.docker_compose_service_name }}_redis_cache"
+        networks:
+        - proxy
+
+    {{ cookiecutter.docker_compose_service_name }}:
+        environment:
+        - PYTHONUNBUFFERED=1
+        build: 
+            context: .
+            dockerfile: ./Dockerfile
+        image: {{ cookiecutter.docker_compose_service_name }}_img
+        container_name: {{ cookiecutter.docker_compose_service_name }}_cont
+        restart: always
+        ports:
+            - "{{ cookiecutter.app_port }}:{{ cookiecutter.app_port }}"
+        command: python3 -u /app/server.py
+        labels:
+        - "traefik.enable=true"
+        #- "traefik.http.routers.findidback.entrypoints=web"
+        - "traefik.http.routers.findidback.rule=Host(`localhost`) && PathPrefix(`/{{ cookiecutter.url_endpoint_of_app }}{regex:$$|/.*}`)"
+        - "traefik.http.services.findidback.loadbalancer.server.port={{ cookiecutter.app_port }}"
+        #- "traefik.http.routers.findId_back.tls=true"
+        expose:
+        - {{ cookiecutter.app_port }}
+        networks:
+        - proxy
+    
+networks:
+  proxy:
+    external:
+      true

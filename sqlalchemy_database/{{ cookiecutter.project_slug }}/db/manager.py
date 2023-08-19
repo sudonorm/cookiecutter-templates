@@ -13,6 +13,7 @@ from resources import folderPaths
 import time
 import shutil
 from glob import glob
+from sqlalchemy import create_engine, text
 
 SLSH = os.sep
 
@@ -31,12 +32,14 @@ class Connection:
 
 class Migrate(Connection):
 
-    def __init__(self, script_location: str, uri: str, is_sqlite:bool = False, db_file_path:str = None, run_only_migration:bool = False) -> None:
+    def __init__(self, script_location: str, uri: str, is_sqlite:bool = False, db_file_path:str = None, create_only_migration_file:bool = False, run_migration:bool = True, drop_alembic_stamp_head:bool = False) -> None:
         self.script_location = script_location
         self.uri = uri
         self.is_sqlite = is_sqlite
         self.db_file_path = db_file_path
-        self.run_only_migration = run_only_migration
+        self.run_migration = run_migration
+        self.create_only_migration_file = create_only_migration_file
+        self.drop_alembic_stamp_head = drop_alembic_stamp_head
 
     def to_archive(self, path_data=r"", existingFile=r""):
 
@@ -77,7 +80,19 @@ class Migrate(Connection):
                     except:
                         pass
 
+    def drop_table(self, table_name:str="alembic_version", db_uri:str=""):
+
+        engine = create_engine(db_uri)
+        sql = text(f'DROP TABLE {table_name};')
+
+        try:
+            result = engine.execute(sql)
+        except:
+            pass
+
     def init_db(self) -> None:
+
+        vrsns_path = self.script_location+"/versions"
 
         if self.is_sqlite:
             if not os.path.exists(self.db_file_path):
@@ -87,22 +102,73 @@ class Migrate(Connection):
 
         try:
             if not 'alembic' in sys.modules['__main__'].__file__:
+
                 if has_changes:
-                    if not self.run_only_migration:
-                        self.create_migrations(f'{time.strftime("%Y%m%d", time.gmtime())}{" migration"}')
-                    self.run_migrations()
-        except Exception as e:
-            print(str(e))
-            if 'Target database is not' in str(e):
-                vrsns_path = self.script_location+"/versions"
-                self.to_archive(path_data=vrsns_path, existingFile=glob(vrsns_path+'/*.py'))
-                if not 'alembic' in sys.modules['__main__'].__file__:
-                    if has_changes:
-                        if not self.run_only_migration:
+                    if self.create_only_migration_file and self.run_migration:
+                        if len([x for x in glob(vrsns_path+'/*.py') if f'{time.strftime("%Y%m%d", time.gmtime())}{"_migration"}' in x]) != 0:
+                            print("Migration file already exists. Please run migration by setting the appropriate parameter!")
+                        else:
                             self.create_migrations(f'{time.strftime("%Y%m%d", time.gmtime())}{" migration"}')
                         self.run_migrations()
 
+                    elif self.create_only_migration_file and not self.run_migration:
+                        if len([x for x in glob(vrsns_path+'/*.py') if f'{time.strftime("%Y%m%d", time.gmtime())}{"_migration"}' in x]) != 0:
+                            print("Migration file already exists. Please run migration by setting the appropriate parameter!")
+                        else:
+                            self.create_migrations(f'{time.strftime("%Y%m%d", time.gmtime())}{" migration"}')
+
+                    elif not self.create_only_migration_file and self.run_migration:
+                        try:
+                            self.run_migrations()
+                        except Exception as e:
+                            print(str(e))
+                            print("The migration file with the revision id", str(e), "is missing. Check all the migration files to ensure one of them is not missing and try again.")
+                    
+                    else:
+                        pass
+
+        except Exception as e:
+            print(str(e))
+    
+            if 'Target database is not' in str(e):
+                # self.to_archive(path_data=vrsns_path, existingFile=glob(vrsns_path+'/*.py'))
+                if not 'alembic' in sys.modules['__main__'].__file__:
+                    if has_changes:
+                        
+                        if self.create_only_migration_file and self.run_migration:
+                            
+                            if len([x for x in glob(vrsns_path+'/*.py') if f'{time.strftime("%Y%m%d", time.gmtime())}{"_migration"}' in x]) != 0:
+                                print("Migration file already exists. Please run migration by setting the appropriate parameter!")
+                            else:
+                                if self.drop_alembic_stamp_head:
+                                    # self.drop_table(table_name="alembic_version", db_uri=f"sqlite:///{self.db_file_path}")
+                                    self.stamp_revision_head(purge=True) ### forcefully stamp the head of the last known revision as the downgrade of this upgrade
+
+                                self.create_migrations(f'{time.strftime("%Y%m%d", time.gmtime())}{" migration"}')
+                            self.run_migrations()
+                            
+                        elif self.create_only_migration_file and not self.run_migration:
+                            if len([x for x in glob(vrsns_path+'/*.py') if f'{time.strftime("%Y%m%d", time.gmtime())}{"_migration"}' in x]) != 0:
+                                print("Migration file already exists. Please run migration by setting the appropriate parameter!")
+                            else:
+                                if self.drop_alembic_stamp_head:
+                                    # self.drop_table(table_name="alembic_version", db_uri=f"sqlite:///{self.db_file_path}")
+                                    self.stamp_revision_head(purge=True) ### forcefully stamp the head of the last known revision as the downgrade of this upgrade
+                                
+                                self.create_migrations(f'{time.strftime("%Y%m%d", time.gmtime())}{" migration"}')
+
+                        elif not self.create_only_migration_file and self.run_migration:
+                            try:
+                                self.run_migrations()
+                            except Exception as e:
+                                print(str(e))
+                                print("The migration file with the revision id", str(e), "is missing. Check all the migration files to ensure one of them is not missing and try again.")
+                    
+                        else:
+                            pass
+
     def check_for_migrations(self) -> bool:
+        #### This function requires alembic version > 1.9
         config = Config()
         config.set_main_option("sqlalchemy.url", self.uri)
         config.set_main_option('script_location', self.script_location)
@@ -146,6 +212,16 @@ class Migrate(Connection):
         config.set_main_option('script_location', self.script_location)
         command.revision(config, message=message, autogenerate=True)
 
+    def stamp_revision_head(self, revision:str = 'head', purge:bool=True) -> None:
+        ### stamping the head version will update the version_num in the respective database
+        config = Config()
+        config.set_main_option("sqlalchemy.url", self.uri)
+        config.set_main_option('script_location', self.script_location)
+        #prepare and run the command
+        sql = False
+        tag = None
+        command.stamp(config, revision, sql=sql, tag=tag, purge=purge)
+    
     def run_migrations(self) -> None:
         # namespace_revision = CommandLine().parser.parse_args(["upgrade", "head"])
         config = Config()
