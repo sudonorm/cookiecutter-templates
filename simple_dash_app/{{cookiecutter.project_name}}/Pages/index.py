@@ -19,7 +19,6 @@ home_dir = (os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(home_dir)
 from utils import folderPaths
 
-S_DRIVE = folderPaths.S_DRIVE
 LINUX_MNT = folderPaths.LINUX_MNT
 USER_DRIVE = folderPaths.USER_DRIVE
 USER = folderPaths.USER
