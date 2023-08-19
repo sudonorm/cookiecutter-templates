@@ -20,7 +20,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.{{ cookiecutter.traefik_router_name }}.entrypoints=websecure"
-      - "traefik.http.routers.{{ cookiecutter.traefik_router_name }}.rule=Host(`stat-hh-smiworker.corp.statista.com`) && PathPrefix(`/{{ cookiecutter.url_endpoint_of_app }}{regex:$$|/.*}`)"
+      - "traefik.http.routers.{{ cookiecutter.traefik_router_name }}.rule=Host(`example.com`) && PathPrefix(`/{{ cookiecutter.url_endpoint_of_app }}{regex:$$|/.*}`)"
       - "traefik.http.services.{{ cookiecutter.traefik_router_name }}.loadbalancer.server.port={{ cookiecutter.app_port }}"
       - "traefik.http.routers.{{ cookiecutter.traefik_router_name }}.tls=true"
     networks:
